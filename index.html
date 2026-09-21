@@ -74,6 +74,7 @@
   .group h4 .gname{font-weight:600}
   .group .chips{display:flex;flex-wrap:wrap;gap:8px}
   .drop-here{font-size:12px;color:var(--hint);padding:4px 2px}
+  .pool.pickable,.group.pickable{outline:2px dashed rgba(44,140,125,.55);outline-offset:4px;border-radius:14px;cursor:pointer}
   /* 复盘 */
   .face-down{width:100%;min-height:88px;background:#D3D1C7;border-radius:var(--radius);
     display:flex;align-items:center;justify-content:center;color:#5F5E5A;font-size:26px;cursor:pointer}
@@ -681,8 +682,8 @@ function renderPuzzle(body,topic){
   const pool=topic.cards.filter(c=>!groupIdOf(topic,c.id));
   body.innerHTML=`
     <div class="card">
-      <p class="stepper" style="margin:0 0 10px">学完 5 分钟内做：把碎片<b>拖进分组</b>（手机上点卡片选中，再点分组即可移动）。分组可以<b>上下排序、加说明</b>，把组间的先后、对比关系也整理进去。哪里没懂不用在这里判断——复盘时自己标。</p>
-      <div class="pool" id="pool">
+      <p class="stepper" style="margin:0 0 10px">学完 5 分钟内做：把碎片<b>拖进分组</b>（手机上点卡片选中，再点目标分组的<b>任意位置</b>即可移动；空组也能点）。分组可以<b>上下排序、加说明</b>，把组间的先后、对比关系也整理进去。哪里没懂不用在这里判断——复盘时自己标。</p>
+      <div class="pool ${selectedCard?"pickable":""}" id="pool">
         <p style="margin:0 0 6px;font-size:12px;color:var(--teal-deep)">还没归组的碎片（${pool.length}）· 归不进组的可以一直留在池子</p>
         <div class="chips" style="display:flex;flex-wrap:wrap;gap:8px">
           ${pool.length===0?`<span class="drop-here">${topic.cards.length?"都归组了，可以保存结构了":"先去「收集」页丢几张碎片"}</span>`
@@ -691,7 +692,7 @@ function renderPuzzle(body,topic){
       </div>
       <div style="margin-top:12px">
         ${topic.groups.length===0?"":topic.groups.map((g,gi)=>`
-          <div class="group" data-gid="${g.id}">
+          <div class="group ${selectedCard?"pickable":""}" data-gid="${g.id}">
             <h4><span class="gname" data-rename="${g.id}" title="点击重命名">${esc(g.name)}</span>
               <button class="btn small" data-note="${g.id}" title="编辑说明">说明</button>
               <button class="btn small" data-up="${g.id}" title="上移">↑</button>
@@ -731,10 +732,18 @@ function renderPuzzle(body,topic){
         const gid=el.closest(".group")?.dataset.gid||null;
         moveTo(selectedCard,gid);
       }else{
-        selectedCard=cid; toast("已选中，点目标分组（或池子）放进去");
+        selectedCard=cid; toast("已选中 · 点目标分组的任意位置放进去，再点这张卡取消");
         renderPuzzle(body,topic);
       }
     };
+  });
+  // 点分组区域任意空白处也能放（空分组 / 组内空隙）
+  body.querySelectorAll(".pool,.group").forEach(zone=>{
+    zone.addEventListener("click",ev=>{
+      if(!selectedCard) return;
+      if(ev.target.closest(".chip")||ev.target.closest("button")) return;
+      moveTo(selectedCard, zone.classList.contains("group")?zone.dataset.gid:null);
+    });
   });
   // 拖拽（桌面）
   body.querySelectorAll(".chip").forEach(el=>{
@@ -760,7 +769,8 @@ function renderPuzzle(body,topic){
     };
   });
   body.querySelectorAll("[data-rename]").forEach(el=>{
-    el.onclick=()=>{
+    el.onclick=(ev)=>{
+      if(selectedCard){ ev.stopPropagation(); moveTo(selectedCard, el.closest(".group").dataset.gid); return; }
       const g=topic.groups.find(x=>x.id===el.dataset.rename);
       askText("分组名",g.name,(name)=>{ g.name=name; save(); renderPuzzle(body,topic); },"比如：助动词 / 词序");
     };
