@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>碎片复盘 · 给「好像懂了，说不出来」的你</title>
+<style>
+  :root{
+    --bg:#FAFAF7; --surface:#FFFFFF; --text:#2C2C2A; --muted:#888780; --hint:#B4B2A9;
+    --border:rgba(0,0,0,.12); --border-strong:rgba(0,0,0,.25);
+    --teal-bg:#E1F5EE; --teal-deep:#085041; --teal-mid:#0F6E56;
+    --purple-bg:#EEEDFE; --purple-deep:#3C3489; --purple-mid:#534AB7;
+    --coral-bg:#FAECE7; --coral-deep:#712B13; --coral-mid:#D85A30;
+    --green-bg:#EAF3DE; --green-deep:#27500A;
+    --red-bg:#FCEBEB; --red-deep:#791F1F;
+    --amber-bg:#FAEEDA; --amber-deep:#633806;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    font-size:14px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+  .container{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+  header.app{display:flex;align-items:baseline;gap:10px;margin:8px 0 4px}
+  header.app h1{font-size:20px;font-weight:600;margin:0;letter-spacing:1px}
+  header.app .sub{color:var(--muted);font-size:12px}
+  .muted{color:var(--muted)} .hint{color:var(--hint);font-size:12px}
+  .btn{appearance:none;border:1px solid var(--border-strong);background:var(--surface);
+    color:var(--text);border-radius:10px;padding:7px 14px;font-size:13px;cursor:pointer}
+  .btn:hover{background:#F1EFE8}
+  .btn.primary{background:var(--teal-mid);border-color:var(--teal-mid);color:#fff}
+  .btn.primary:hover{background:#0d5f4b}
+  .btn.danger{color:var(--red-deep)}
+  .btn.small{padding:3px 8px;font-size:12px;border-radius:8px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  input[type=text],textarea{border:1px solid var(--border-strong);border-radius:10px;
+    padding:9px 12px;font-size:14px;font-family:inherit;width:100%;background:var(--surface);color:var(--text)}
+  input[type=text]:focus,textarea:focus{outline:2px solid var(--teal-mid);outline-offset:-1px}
+  textarea{resize:vertical;min-height:120px;line-height:1.7}
+  .row{display:flex;gap:8px;align-items:center}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+  /* 主题卡片 */
+  .topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:14px}
+  .topic-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px;cursor:pointer;transition:transform .08s ease}
+  .topic-card:hover{transform:translateY(-2px)}
+  .topic-card h3{margin:0 0 4px;font-size:15px;font-weight:600}
+  .due-pill{display:inline-block;font-size:11px;color:var(--coral-deep);background:var(--coral-bg);
+    border-radius:999px;padding:1px 9px;margin-top:6px}
+  .ok-pill{display:inline-block;font-size:11px;color:var(--green-deep);background:var(--green-bg);
+    border-radius:999px;padding:1px 9px;margin-top:6px}
+  /* 标签页 */
+  .tabs{display:flex;gap:6px;margin:14px 0;background:#F1EFE8;border-radius:12px;padding:4px}
+  .tab{flex:1;text-align:center;padding:8px 0;border-radius:9px;font-size:14px;cursor:pointer;color:var(--muted)}
+  .tab.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .tab .n{display:inline-block;min-width:18px;font-size:11px;background:var(--coral-mid);color:#fff;border-radius:999px;padding:0 5px;margin-left:4px;vertical-align:2px}
+  /* 碎片卡 */
+  .wall{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{border-radius:10px;padding:8px 12px;font-size:13px;border:1px solid transparent;
+    cursor:grab;position:relative;user-select:none;max-width:100%}
+  .chip .del{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;
+    background:#5F5E5A;color:#fff;font-size:11px;line-height:18px;text-align:center;display:none;cursor:pointer}
+  .chip:hover .del{display:block}
+  .chip.selected{outline:2px solid var(--purple-mid);outline-offset:1px}
+  .chip .tag{display:inline-block;font-size:10px;color:#fff;border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:1px}
+  .chip.dragging{opacity:.4}
+  /* 拼接 */
+  .pool{min-height:56px;border:1.5px dashed var(--teal-mid);border-radius:var(--radius);
+    padding:10px;background:rgba(225,245,238,.35)}
+  .group{border:1.5px dashed var(--purple-mid);border-radius:var(--radius);padding:10px;margin-bottom:10px;
+    background:rgba(238,237,254,.4)}
+  .group.over,.pool.over{background:rgba(224,231,255,.75);border-color:var(--purple-mid)}
+  .group h4{margin:0 0 8px;font-size:13px;color:var(--purple-deep);cursor:pointer;display:flex;align-items:center;gap:8px}
+  .group h4 .gname{font-weight:600}
+  .group .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .drop-here{font-size:12px;color:var(--hint);padding:4px 2px}
+  /* 复盘 */
+  .face-down{width:100%;min-height:88px;background:#D3D1C7;border-radius:var(--radius);
+    display:flex;align-items:center;justify-content:center;color:#5F5E5A;font-size:26px;cursor:pointer}
+  .face-down.open{background:var(--coral-bg);color:var(--coral-deep);font-size:15px;padding:16px;cursor:default}
+  .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .mode{border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center;cursor:pointer;background:var(--surface)}
+  .mode:hover{border-color:var(--teal-mid)}
+  .mode b{display:block;font-size:15px;margin-bottom:2px}
+  .mode span{font-size:12px;color:var(--muted)}
+  .mark-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .mark-btn{border:1px solid var(--border-strong);background:var(--surface);border-radius:8px;
+    padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text)}
+  .mark-btn.hit.on{background:var(--green-bg);border-color:#639922;color:var(--green-deep)}
+  .mark-btn.missed.on{background:var(--red-bg);border-color:#E24B4A;color:var(--red-deep)}
+  .mark-btn.wrong.on{background:var(--amber-bg);border-color:#BA7517;color:var(--amber-deep)}
+  .snapshot-card{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:#F7F6F2;border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px;flex-wrap:wrap}
+  .snapshot-card .txt{font-size:13px}
+  .summary-big{font-size:16px;font-weight:600;margin:6px 0}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(80px);
+    background:#2C2C2A;color:#fff;font-size:13px;border-radius:10px;padding:9px 18px;opacity:0;
+    transition:all .25s ease;pointer-events:none;max-width:86vw;z-index:99}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px}
+  .divider{border:none;border-top:1px solid var(--border);margin:22px 0}
+  .stepper{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .stepper b{color:var(--coral-mid)}
+  .timer{font-size:34px;font-weight:600;text-align:center;margin:14px 0;color:var(--coral-deep);font-variant-numeric:tabular-nums}
+  footer{margin-top:30px;text-align:center;font-size:12px;color:var(--hint)}
+  .modal-ov{position:fixed;inset:0;background:rgba(44,44,42,.35);z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:var(--surface);border-radius:14px;padding:18px;width:100%;max-width:340px;
+    border:1px solid var(--border)}
+  .modal h3{margin:0 0 8px;font-size:15px;font-weight:600}
+  .modal p{font-size:13px;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+
+/* ============ 数据与存储 ============ */
+const KEY = "wenle-data-v1";
+const PASTELS = ["#E1F5EE","#EEEDFE","#FAECE7","#FAEEDA","#FBEAF0","#E6F1FB","#EAF3DE"];
+const INTERVALS = {1:2, 2:4, 3:7}; // 命中后按 box 决定下次间隔(天)
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.topics)){ if(!Array.isArray(d.trash)) d.trash=[]; return d; } }
+  }catch(e){}
+  return { topics: [], trash: [] };
+}
+let data = loadData();
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDaysStr(n){ const d=new Date(); d.setDate(d.getDate()+n);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtDate(s){ if(!s) return "未定"; const [y,m,dd]=s.split("-"); return Number(m)+"月"+Number(dd)+"日"; }
+function dateStr(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+function newTopic(name){
+  return { id: uid(), name: name, createdAt: todayStr(),
+    cards: [],          // {id,text,created,box,due}
+    groups: [],         // {id,name,note,cardIds:[]}
+    material: "",       // 参考资料（纯文本）
+    snapshot: null,     // {savedAt, groups:[{name,cardIds:[]}]}
+    reviews: [] };
+}
+function topicById(id){ return data.topics.find(t=>t.id===id); }
+function cardById(topic,cid){ return topic.cards.find(c=>c.id===cid); }
+function groupIdOf(topic,cid){ const g=topic.groups.find(g=>g.cardIds.includes(cid)); return g?g.id:null; }
+function dueCount(topic){
+  if(!topic.snapshot) return 0;
+  const t=todayStr(); const ids=new Set();
+  topic.snapshot.groups.forEach(g=>g.cardIds.forEach(cid=>ids.add(cid)));
+  let n=0; ids.forEach(cid=>{ const c=cardById(topic,cid); if(c && c.due && c.due<=t) n++; });
+  return n;
+}
+
+/* ============ 界面状态 ============ */
+let view = { name:"home" };
+let selectedCard = null;   // 拼接页点选的卡
+let review = null;         // 复盘流程状态
+let lastSummary = null;    // 刚完成的复盘小结
+
+const app = document.getElementById("app");
+
+function toast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2200);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+function chipBg(i){ return PASTELS[i % PASTELS.length]; }
+
+/* 应用内弹窗：不依赖 prompt/confirm（iframe 环境会被浏览器拦截） */
+function buildModal(innerHTML){
+  const ov=document.createElement("div");
+  ov.className="modal-ov";
+  ov.innerHTML=`<div class="modal">${innerHTML}</div>`;
+  document.body.appendChild(ov);
+  return ov;
+}
+function askText(title,value,cb,placeholder,allowEmpty){
+  const ov=buildModal(`<h3>${esc(title)}</h3>
+    <input type="text" id="mIn" value="${esc(value||"")}" placeholder="${esc(placeholder||"")}" style="margin-top:4px">
+    <div class="row" style="justify-content:flex-end;margin-top:14px">
+      <button class="btn" id="mCancel">取消</button>
+      <button class="btn primary" id="mOk">确定</button></div>`);
+  const inp=ov.querySelector("#mIn");
+  setTimeout(()=>{ inp.focus(); inp.select(); },30);
+  const close=()=>ov.remove();
+  const ok=()=>{ const v=inp.value.trim(); if(!v&&!allowEmpty){ inp.focus(); return; } close(); cb(v); };
+  ov.querySelector("#mOk").onclick=ok;
+  ov.querySelector("#mCancel").onclick=close;
+  inp.onkeydown=e=>{ if(e.key==="Enter") ok(); };
+}
+function askConfirm(title,msg,cb){
+  const ov=buildModal(`<h3>${esc(title)}</h3><p>${esc(msg)}</p>
+    <div class="row" style="justify-content:flex-end;margin-top:14px">
+      <button class="btn" id="mCancel">取消</button>
+      <button class="btn danger" id="mOk">确定</button></div>`);
+  const close=()=>ov.remove();
+  ov.querySelector("#mOk").onclick=()=>{ close(); cb(); };
+  ov.querySelector("#mCancel").onclick=close;
+}
+
+/* ============ 首页 ============ */
+function renderHome(){
+  const totalCards=data.topics.reduce((n,t)=>n+t.cards.length,0);
+  const totalReviews=data.topics.reduce((n,t)=>n+t.reviews.length,0);
+  const dueList=data.topics.filter(t=>dueCount(t)>0);
+  app.innerHTML = `
+    <header class="app"><h1>碎片复盘</h1><span class="sub">碎片收集 → 结构拼接 → 复盘提取</span></header>
+    <p class="hint">给「好像懂了，又说不出来」的学习复盘工具。所有数据只存在你自己的浏览器里。</p>
+    ${data.topics.length?`
+    <div class="row" style="gap:8px;margin:12px 0 2px;flex-wrap:wrap">
+      <span style="font-size:12px;background:#F1EFE8;border-radius:999px;padding:3px 12px;color:var(--text)">${data.topics.length} 个主题</span>
+      <span style="font-size:12px;background:#F1EFE8;border-radius:999px;padding:3px 12px;color:var(--text)">${totalCards} 张碎片</span>
+      <span style="font-size:12px;background:#F1EFE8;border-radius:999px;padding:3px 12px;color:var(--text)">累计复盘 ${totalReviews} 次</span>
+    </div>`:""}
+    ${dueList.length?`
+    <div class="card" style="margin-top:12px;border-color:var(--coral-mid)">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--coral-mid)">今天该复盘了</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        ${dueList.map(t=>`<button class="btn" data-review="${t.id}">${esc(t.name)} · ${dueCount(t)} 张</button>`).join("")}
+      </div>
+    </div>`:""}
+    ${data.topics.length===0?`
+    <div class="card" style="margin-top:14px">
+      <p style="font-weight:600;margin:0 0 8px">怎么用（三步）</p>
+      <p style="margin:0 0 6px;font-size:13px"><b>① 收集</b>：学的时候随手记，一张卡一个关键词，不整理不打断。</p>
+      <p style="margin:0 0 6px;font-size:13px"><b>② 拼接</b>：学完 5 分钟内，把碎片拖成分组、排好先后、写上组间说明，拼出你理解的骨架。</p>
+      <p style="margin:0 0 6px;font-size:13px"><b>③ 复盘</b>：隔天合上资料，用自己的话讲一遍，对照原文和结构标记漏和错，忘了的明天再来。</p>
+    </div>`:""}
+    <div class="row" style="margin-top:14px">
+      <input type="text" id="newTopicName" placeholder="新建一个主题，比如：德语 · 现在完成时" style="flex:1">
+      <button class="btn primary" id="addTopicBtn">新建</button>
+    </div>
+    ${ data.topics.length===0
+      ? `<div class="empty">还没有主题。建一个，把正在学的东西丢进来。</div>`
+      : `<div class="topic-grid">${data.topics.map(t=>{
+          const due=dueCount(t); const total=t.cards.length;
+          return `<div class="topic-card" data-id="${t.id}">
+            <h3>${esc(t.name)}</h3>
+            <div class="muted" style="font-size:12px">${total} 张碎片${t.snapshot?" · 已有结构":" · 未拼结构"}</div>
+            ${t.snapshot ? (due>0 ? `<span class="due-pill">今天该复盘 ${due} 张</span>`
+                                  : `<span class="ok-pill">下次复盘 ${fmtDate(nextDue(t))}</span>`) : ""}
+          </div>`;
+        }).join("")}</div>` }
+    <hr class="divider">
+    <div class="row">
+      <button class="btn" id="exportBtn">导出数据 (JSON)</button>
+      <button class="btn" id="importBtn">导入数据</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="card" style="margin-top:16px">
+      <p style="font-weight:600;margin:0 0 6px">数据提醒</p>
+      <p style="margin:0;font-size:13px;color:var(--muted)">所有数据只存在当前浏览器里，不联网、不上传；换设备不会自动同步，记得定期导出备份。清除浏览器数据会把它一起清掉。</p>
+    </div>
+    <footer>「碎片复盘」· 开源学习复盘工具 · 数据存于本地浏览器，记得定期导出备份</footer>
+  `;
+  const nameInput=document.getElementById("newTopicName");
+  function addTopic(){
+    const name=nameInput.value.trim();
+    if(!name){ toast("先给主题起个名字"); return; }
+    data.topics.unshift(newTopic(name)); save();
+    nameInput.value=""; renderHome(); toast("建好了，去丢碎片吧");
+  }
+  document.getElementById("addTopicBtn").onclick=addTopic;
+  nameInput.onkeydown=e=>{ if(e.key==="Enter") addTopic(); };
+  app.querySelectorAll(".topic-card").forEach(el=>{
+    el.onclick=()=>{ view={name:"topic",id:el.dataset.id,tab:"collect"}; selectedCard=null; review=null; lastSummary=null; render(); };
+  });
+  app.querySelectorAll("[data-review]").forEach(el=>{
+    el.onclick=()=>{ view={name:"topic",id:el.dataset.review,tab:"review"}; selectedCard=null; review=null; lastSummary=null; render(); };
+  });
+  document.getElementById("exportBtn").onclick=exportData;
+  document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange=importData;
+}
+
+function nextDue(topic){
+  if(!topic.snapshot) return null;
+  const ids=new Set(); topic.snapshot.groups.forEach(g=>g.cardIds.forEach(c=>ids.add(c)));
+  let min=null;
+  ids.forEach(cid=>{ const c=cardById(topic,cid);
+    if(c&&c.due&&(min===null||c.due<min)) min=c.due; });
+  return min;
+}
+
+function inIframe(){ try{ return window.self!==window.top; }catch(e){ return true; } }
+function downloadBlob(name, content, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+/* 预览 iframe 等沙盒环境会静默拦截下载（无报错、toast 照弹），此时给复制兜底 */
+function offerCopyFallback(title,content){
+  const ov=buildModal(`<h3>${esc(title)}</h3>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 8px">当前预览环境的浏览器策略拦截了文件下载（应用本身没问题，部署上线后可正常下载保存）。先用下面的方式救急：</p>
+    <textarea id="mCopyArea" readonly style="width:100%;height:220px;font-size:12px;font-family:monospace;border:1px solid var(--border);border-radius:8px;padding:8px;box-sizing:border-box"></textarea>
+    <div class="row" style="justify-content:flex-end;margin-top:12px">
+      <button class="btn" id="mCopyClose">关闭</button>
+      <button class="btn primary" id="mCopyBtn">复制内容</button>
+    </div>`);
+  const ta=ov.querySelector("#mCopyArea"); ta.value=content;
+  ov.querySelector("#mCopyClose").onclick=()=>ov.remove();
+  ov.querySelector("#mCopyBtn").onclick=()=>{
+    ta.focus(); ta.select(); ta.setSelectionRange(0,content.length);
+    let ok=false;
+    try{ ok=document.execCommand("copy"); }catch(e){}
+    if(!ok&&navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(content).then(()=>toast("已复制到剪贴板")).catch(()=>toast("复制被拦截，请手动全选复制"));
+      return;
+    }
+    toast(ok?"已复制到剪贴板，自己粘到文件里保存":"复制被拦截，请手动全选复制");
+  };
+}
+function exportData(){
+  const json=JSON.stringify(data,null,2);
+  if(inIframe()){ offerCopyFallback("导出完整备份 (JSON)",json); return; }
+  downloadBlob("碎片复盘备份-"+todayStr()+".json", json, "application/json");
+  toast("已导出备份文件");
+}
+function reviewModeName(m){ return m==="write"?"写":m==="speak"?"说":"翻卡"; }
+
+/* 模糊文本匹配（零依赖）：归一化（剔虚词）+ 二元组覆盖率，用于「已记」识别和输出覆盖对照 */
+function normText(s){ return (s||"").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu,""); }
+function normCore(s){ return normText(s).replace(/[的了是在和与有这那也很就还才上下里为把对从向等]/g,""); }
+function bigrams(s){ const set=new Set(); for(let i=0;i<s.length-1;i++) set.add(s.slice(i,i+2)); return set; }
+function coverageRatio(line,outB){ const b=bigrams(line); if(b.size===0) return 1; let hit=0; b.forEach(x=>{ if(outB.has(x)) hit++; }); return hit/b.size; }
+function longestCommon(a,b){ let best=""; for(let i=0;i<a.length;i++){ for(let j=0;j<b.length;j++){ if(a[i]===b[j]){ let k=0; while(i+k<a.length&&j+k<b.length&&a[i+k]===b[j+k])k++; if(k>best.length) best=a.substr(i,k); } } } return best; }
+function findBestMatch(line,cards){
+  const nl=normCore(line); if(nl.length<2) return null;
+  let best=null;
+  cards.forEach(c=>{
+    const nc=normCore(c.text); if(!nc) return;
+    let cov=coverageRatio(nl,bigrams(nc))*Math.min(1,nc.length/nl.length);
+    if(nc.includes(nl)) cov=1;
+    if(!best||cov>best.cov) best={card:c,cov:Math.min(1,cov)};
+  });
+  if(best&&best.cov<1&&best.cov>=0.3) best.common=longestCommon(nl,normCore(best.card.text));
+  return best;
+}
+function parseOutline(mat){
+  const blocks=[]; let cur=null;
+  (mat||"").split("\n").forEach(raw=>{
+    const t=raw.trim(); if(!t) return;
+    const isHeading=/^(\d{1,2}|[一二三四五六七八九十]{1,3})\s*[.、．:：)）]/.test(t) && t.length<=20 && !/[。！？;；]$/.test(t)
+      || (t.length<=12 && !/[。！？;；,.!?，。]$/.test(t));
+    if(isHeading){ cur={heading:t,items:[]}; blocks.push(cur); }
+    else{ if(!cur){ cur={heading:"",items:[]}; blocks.push(cur); } cur.items.push(t); }
+  });
+  return blocks;
+}
+function stripNumbering(t){ return t.replace(/^(\d{1,2}|[一二三四五六七八九十]{1,3})\s*[.、．:：)）]\s*/,""); }
+
+/* 文档解析：docx 用浏览器原生 DecompressionStream（零依赖），pdf 懒加载 pdf.js */
+async function extractDocxText(file){
+  if(typeof DecompressionStream==="undefined") throw new Error("浏览器太旧");
+  const buf=new Uint8Array(await file.arrayBuffer());
+  const dec=new TextDecoder();
+  let eocd=buf.length-22;
+  while(eocd>=0 && !(buf[eocd]===0x50&&buf[eocd+1]===0x4b&&buf[eocd+2]===0x05&&buf[eocd+3]===0x06)) eocd--;
+  if(eocd<0) throw new Error("不是有效的 docx");
+  const count=buf[eocd+10]|(buf[eocd+11]<<8);
+  let p=buf[eocd+16]|(buf[eocd+17]<<8)|(buf[eocd+18]<<16)|(buf[eocd+19]<<24);
+  let xml=null;
+  for(let n=0;n<count;n++){
+    if(!(buf[p]===0x50&&buf[p+1]===0x4b&&buf[p+2]===0x01&&buf[p+3]===0x02)) break;
+    const method=buf[p+10]|(buf[p+11]<<8);
+    const compSize=buf[p+20]|(buf[p+21]<<8)|(buf[p+22]<<16)|(buf[p+23]<<24);
+    const nameLen=buf[p+28]|(buf[p+29]<<8);
+    const extraLen=buf[p+30]|(buf[p+31]<<8);
+    const commentLen=buf[p+32]|(buf[p+33]<<8);
+    const lho=buf[p+42]|(buf[p+43]<<8)|(buf[p+44]<<16)|(buf[p+45]<<24);
+    const name=dec.decode(buf.subarray(p+46,p+46+nameLen));
+    if(name==="word/document.xml"){
+      const lnLen=buf[lho+26]|(buf[lho+27]<<8);
+      const leLen=buf[lho+28]|(buf[lho+29]<<8);
+      const data=buf.subarray(lho+30+lnLen+leLen, lho+30+lnLen+leLen+compSize);
+      if(method===0){ xml=dec.decode(data); }
+      else{
+        const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        xml=dec.decode(new Uint8Array(await new Response(stream).arrayBuffer()));
+      }
+      break;
+    }
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  if(xml===null) throw new Error("docx 里找不到正文");
+  const unescape=s=>s.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&");
+  return xml.split(/<\/w:p>/).map(par=>
+    [...par.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(m=>unescape(m[1])).join("")
+  ).filter(s=>s.trim()).join("\n");
+}
+async function extractPdfText(file){
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement("script");
+      s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+      s.onload=res; s.onerror=()=>rej(new Error("加载解析器失败"));
+      document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const pages=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const tc=await (await pdf.getPage(i)).getTextContent();
+    pages.push(tc.items.map(it=>it.str).join(" ").trim());
+  }
+  return pages.filter(s=>s).join("\n\n");
+}
+function buildReport(topic){
+  const L=[];
+  L.push("碎片复盘 · "+topic.name);
+  L.push("导出时间："+todayStr());
+  L.push("");
+  if((topic.material||"").trim()){
+    L.push("【参考资料】");
+    L.push(topic.material.trim());
+    L.push("");
+  }
+  L.push("【碎片结构】"+(topic.snapshot?("保存于 "+fmtDate(topic.snapshot.savedAt)):"尚未保存结构"));
+  (topic.snapshot?topic.snapshot.groups:[]).forEach(g=>{
+    L.push("· "+g.name+(g.note?("（"+g.note+"）"):""));
+    g.cardIds.forEach(cid=>{ const c=cardById(topic,cid); if(c) L.push("    - "+c.text); });
+  });
+  const pool=topic.cards.filter(c=>!groupIdOf(topic,c.id));
+  if(pool.length){
+    L.push("【未归组碎片】");
+    pool.forEach(c=>L.push("    - "+c.text));
+  }
+  const n=topic.cards.length;
+  let stable=0,building=0;
+  topic.cards.forEach(c=>{ if((c.box||0)>=3) stable++; else if((c.box||0)>=1) building++; });
+  L.push("【掌握情况】共 "+n+" 张：已掌握 "+stable+" · 巩固中 "+building+" · 未掌握 "+(n-stable-building));
+  if(topic.reviews.length){
+    L.push("");
+    L.push("【复盘历史】（最近 20 次）");
+    topic.reviews.slice(-20).forEach(r=>{
+      L.push(fmtDate(r.date)+" · "+reviewModeName(r.mode)+"模式 · 掌握 "+r.hits.length+" · 未掌握 "+(r.missed.length+r.wrong.length));
+    });
+  }
+  return L.join("\n");
+}
+function exportTopicReport(topic,kind){
+  const report=buildReport(topic);
+  const safeName=topic.name.replace(/[\\/:*?"<>|]/g,"_");
+  if(inIframe()){
+    offerCopyFallback(kind==="txt"?"导出文本报告 (.txt)":"导出 Word 报告 (.doc)",report);
+    return;
+  }
+  if(kind==="txt"){
+    downloadBlob("碎片复盘-"+safeName+"-"+todayStr()+".txt", report, "text/plain;charset=utf-8");
+  }else{
+    const html='<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>'+esc(topic.name)+'</title></head><body><pre style="font-family:SimSun,serif;font-size:12pt;line-height:1.6">'+esc(report).replace(/\n/g,"<br>")+"</pre></body></html>";
+    downloadBlob("碎片复盘-"+safeName+"-"+todayStr()+".doc", html, "application/msword");
+  }
+  toast("已导出");
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const d=JSON.parse(reader.result);
+      if(!d || !Array.isArray(d.topics)) throw new Error("格式不对");
+      askConfirm("导入数据","导入会覆盖当前所有数据，确定吗？",()=>{
+        data=d; save(); renderHome(); toast("导入完成");
+      });
+    }catch(err){ toast("文件格式不对，导入失败"); }
+  };
+  reader.readAsText(f);
+  e.target.value="";
+}
+
+/* ============ 主题页 ============ */
+function renderTopic(){
+  const topic=topicById(view.id);
+  if(!topic){ view={name:"home"}; render(); return; }
+  const tabs=[["collect","收集"],["material","资料"],["puzzle","拼接"],["review","复盘"],["stats","统计"]];
+  const due=dueCount(topic);
+  app.innerHTML=`
+    <div class="row" style="justify-content:space-between">
+      <button class="btn small" id="backBtn">‹ 主题列表</button>
+      <button class="btn small danger" id="delTopicBtn">删除主题</button>
+    </div>
+    <header class="app" style="margin-top:12px"><h1>${esc(topic.name)}</h1>
+      <span class="sub">${topic.cards.length} 张碎片</span></header>
+    <div class="tabs">${tabs.map(([k,label])=>{
+      let cls="tab"+(view.tab===k?" active":"");
+      let badge = (k==="review"&&topic.snapshot&&due>0) ? `<span class="n">${due}</span>` : "";
+      return `<div class="${cls}" data-tab="${k}">${label}${badge}</div>`;
+    }).join("")}</div>
+    <div id="tabBody"></div>
+  `;
+  document.getElementById("backBtn").onclick=()=>{ view={name:"home"}; render(); };
+  document.getElementById("delTopicBtn").onclick=()=>{
+    askConfirm("删除主题","删除「"+topic.name+"」及其全部碎片？此操作不可撤销。",()=>{
+      data.topics=data.topics.filter(t=>t.id!==topic.id); save();
+      view={name:"home"}; render(); toast("已删除");
+    });
+  };
+  app.querySelectorAll(".tab").forEach(el=>{ el.onclick=()=>{ view.tab=el.dataset.tab; review=null; lastSummary=null; render(); }; });
+  const body=document.getElementById("tabBody");
+  if(view.tab==="collect") renderCollect(body,topic);
+  else if(view.tab==="material") renderMaterial(body,topic);
+  else if(view.tab==="puzzle") renderPuzzle(body,topic);
+  else if(view.tab==="stats") renderStats(body,topic);
+  else renderReview(body,topic);
+}
+
+/* ---- 参考资料 ---- */
+function renderMaterial(body,topic){
+  const mat=topic.material||"";
+  body.innerHTML=`
+    <div class="card">
+      <p class="stepper" style="margin:0 0 10px">参考资料是复盘对照时的原文依据：先贴进来，复盘时「展开参考资料」逐条核对自己讲对了没有。</p>
+      <textarea id="materialText" style="min-height:200px" placeholder="把要学的原始材料贴进来：课本段落、笔记、老师给的讲义……">${esc(mat)}</textarea>
+      <div class="row" style="margin-top:10px;flex-wrap:wrap">
+        <button class="btn primary" id="saveMaterialBtn">保存资料</button>
+        <button class="btn" id="uploadMaterialBtn">上传文件（.txt / .md / .docx / .pdf，追加）</button>
+        <input type="file" id="materialFile" accept=".txt,.md,.docx,.pdf,text/plain" style="display:none">
+        ${mat?`<button class="btn danger" id="clearMaterialBtn">清空</button>`:""}
+      </div>
+      <p class="hint" style="margin:10px 0 0">已保存 ${mat.length} 字 · 资料只存在本地浏览器 · 上传的文件会追加到现有资料末尾，可在上方编辑框里手动整理 · .docx 由浏览器本地解析，不上传服务器 · <b style="color:var(--coral-mid)">扫描版 / 图片型 PDF 暂不支持</b>（图片里的文字提取不了，请复制粘贴）</p>
+      ${(()=>{
+        const blocks=parseOutline(topic.material||"");
+        if(!blocks.length) return "";
+        const fragLines=[]; let count=0;
+        const blockHtml=blocks.map(b=>{
+          const heading=`<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:var(--purple-deep)">${esc(b.heading)}</p>`;
+          if(count>=200) return b.heading?heading:"";
+          const items=b.items.map(t=>{
+            if(count>=200) return "";
+            count++;
+            const i=fragLines.push(t)-1;
+            const best=findBestMatch(stripNumbering(t),topic.cards);
+            const full=!!best&&best.cov>=0.9;
+            const partial=!!best&&!full&&best.cov>=0.3;
+            let state="";
+            if(full){
+              state=best.cov>=1
+                ?`<p style="font-size:12px;color:var(--green-deep);margin:4px 0 0">已记：${esc(best.card.text)}</p>`
+                :`<p style="font-size:12px;color:var(--green-deep);margin:4px 0 0">已记：${esc(best.card.text)}（约 ${Math.round(best.cov*100)}% 重合）</p>`;
+            }else if(partial){
+              const common=best.common&&best.common.length>=2?`，共同部分「${esc(best.common)}」`:"";
+              state=`<p style="font-size:12px;color:var(--amber-deep);margin:4px 0 0">只记了相关的：${esc(best.card.text)}（重合约 ${Math.round(best.cov*100)}%${common}，有出入）</p>`;
+            }
+            const label=full?"已记":partial?"补记":"记为碎片";
+            return `<div class="snapshot-card"><span class="txt" style="flex:1;min-width:0">${esc(stripNumbering(t))}${state}</span>
+              <button class="btn small ${full?"":"primary"}" data-mkfrag="${i}" ${full?"disabled":""}>${label}</button></div>`;
+          }).join("");
+          return `<div style="margin-bottom:14px">${b.heading?heading:""}${items}</div>`;
+        }).join("");
+        return `<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+          <p class="stepper" style="margin:0 0 10px">按原文结构挑重点：小节标题保持原样（不成碎片），<b>正文句子</b>才能记——已记的标出你记的卡，只记了相关关键词的提示补记：</p>
+          ${blockHtml}
+          ${count>=200?`<p class="hint" style="margin:8px 0 0">资料太长，只显示前 200 段正文，更多内容请直接在编辑框里拆分整理。</p>`:""}
+        </div>`;
+      })()}
+    </div>
+  `;
+  const ta=document.getElementById("materialText");
+  document.getElementById("saveMaterialBtn").onclick=()=>{
+    topic.material=ta.value; save(); renderMaterial(body,topic); toast("资料已保存");
+  };
+  body.querySelectorAll("[data-mkfrag]").forEach(el=>{
+    el.onclick=()=>{
+      const lines=[];
+      parseOutline(topic.material||"").forEach(b=>b.items.forEach(t=>lines.push(t)));
+      const raw=lines[Number(el.dataset.mkfrag)];
+      if(raw===undefined) return;
+      const text=stripNumbering(raw);
+      if(!text) return;
+      topic.cards.push({id:uid(),text:text,created:todayStr(),box:0,due:null});
+      save(); renderMaterial(body,topic);
+      toast("已加进碎片池，去「拼接」页归组");
+    };
+  });
+  document.getElementById("uploadMaterialBtn").onclick=()=>document.getElementById("materialFile").click();
+  document.getElementById("materialFile").onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    e.target.value="";
+    const name=f.name.toLowerCase();
+    toast("正在解析「"+f.name+"」…");
+    try{
+      let text="";
+      if(name.endsWith(".docx")){
+        text=await extractDocxText(f);
+      }else if(name.endsWith(".pdf")){
+        text=await extractPdfText(f);
+      }else{
+        text=String(await f.text()).trim();
+      }
+      if(!text.trim()){ toast("没能从这个文件里解析出文字（可能是扫描件）"); return; }
+      topic.material=((topic.material||"").trim()+"\n\n"+text.trim()).trim();
+      save(); renderMaterial(body,topic);
+      toast("已把「"+f.name+"」追加到资料末尾");
+    }catch(err){
+      toast("解析失败："+f.name+"，可以试试直接复制粘贴文字");
+    }
+  };
+  const clearBtn=document.getElementById("clearMaterialBtn");
+  if(clearBtn) clearBtn.onclick=()=>{
+    askConfirm("清空资料","确定清空本主题的全部参考资料？",()=>{
+      topic.material=""; save(); renderMaterial(body,topic); toast("已清空");
+    });
+  };
+}
+
+/* ---- 收集 ---- */
+let collectSearch="";
+function renderCollect(body,topic){
+  const pool=topic.cards.filter(c=>!groupIdOf(topic,c.id));
+  const kw=collectSearch.trim().toLowerCase();
+  const shown=kw? topic.cards.filter(c=>c.text.toLowerCase().includes(kw)) : topic.cards;
+  body.innerHTML=`
+    <div class="card">
+      <p style="margin:0 0 10px" class="hint">学的时候随手记：一张卡一个关键词或一句话。不整理、不打断、怎么舒服怎么来。点卡片文字可以改。</p>
+      <div class="row">
+        <input type="text" id="fragInput" placeholder="随手记一张，回车就存…" style="flex:1">
+        <button class="btn primary" id="addFragBtn">记下</button>
+      </div>
+      ${(topic.material||"").trim()?`<details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:12px;color:var(--teal-mid);user-select:none">记不准了？查一眼参考资料</summary>
+        <div style="margin-top:8px;max-height:180px;overflow:auto;white-space:pre-wrap;background:#F7F6F2;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;line-height:1.7">${esc(topic.material.trim())}</div>
+      </details>`:""}
+      ${topic.cards.length>2?`<input type="text" id="fragSearch" value="${esc(collectSearch)}" placeholder="搜索碎片…" style="margin-top:8px">`:''}
+      ${topic.cards.length===0
+        ? `<div class="empty">还没碎片。看完一段材料，回来丢两三张试试。</div>`
+        : shown.length===0
+        ? `<div class="empty">没有匹配「${esc(collectSearch)}」的碎片。</div>`
+        : `<div class="wall">${shown.map((c,i)=>{
+            const inGroup=!!groupIdOf(topic,c.id);
+            return `<div class="chip" style="background:${chipBg(i)};${inGroup?"opacity:.55":""}" data-id="${c.id}" title="点击编辑">
+              ${esc(c.text)}${inGroup?`<span class="tag" style="background:var(--purple-mid)">已归组</span>`:""}
+              <span class="del" data-del="${c.id}">×</span></div>`;
+          }).join("")}</div>
+        <p class="hint" style="margin:10px 0 0">${pool.length} 张还没归组 · 归组去「拼接」页做</p>`}
+    </div>
+  `;
+  const input=document.getElementById("fragInput");
+  function addFrag(){
+    const text=input.value.trim();
+    if(!text) return;
+    topic.cards.push({id:uid(),text:text,created:todayStr(),box:0,due:null});
+    save(); collectSearch=""; renderCollect(body,topic);
+  }
+  document.getElementById("addFragBtn").onclick=addFrag;
+  input.onkeydown=e=>{ if(e.key==="Enter") addFrag(); };
+  const search=document.getElementById("fragSearch");
+  if(search) search.oninput=e=>{ collectSearch=e.target.value; renderCollect(body,topic); };
+  body.querySelectorAll(".chip").forEach(el=>{
+    el.onclick=(ev)=>{
+      if(ev.target.dataset.del) return;
+      const c=cardById(topic,el.dataset.id);
+      if(!c) return;
+      askText("改这张碎片",c.text,(v)=>{ c.text=v; save(); renderCollect(body,topic); });
+    };
+  });
+  body.querySelectorAll(".chip .del").forEach(el=>{
+    el.onclick=(ev)=>{ ev.stopPropagation(); deleteCard(topic,el.dataset.del); render(); };
+  });
+}
+function deleteCard(topic,cid){
+  topic.cards=topic.cards.filter(c=>c.id!==cid);
+  topic.groups.forEach(g=>{ g.cardIds=g.cardIds.filter(id=>id!==cid); });
+  if(topic.snapshot){ topic.snapshot.groups.forEach(g=>{ g.cardIds=g.cardIds.filter(id=>id!==cid); }); }
+  save();
+}
+
+/* ---- 拼接 ---- */
+function renderPuzzle(body,topic){
+  const pool=topic.cards.filter(c=>!groupIdOf(topic,c.id));
+  body.innerHTML=`
+    <div class="card">
+      <p class="stepper" style="margin:0 0 10px">学完 5 分钟内做：把碎片<b>拖进分组</b>（手机上点卡片选中，再点分组即可移动）。分组可以<b>上下排序、加说明</b>，把组间的先后、对比关系也整理进去。哪里没懂不用在这里判断——复盘时自己标。</p>
+      <div class="pool" id="pool">
+        <p style="margin:0 0 6px;font-size:12px;color:var(--teal-deep)">还没归组的碎片（${pool.length}）· 归不进组的可以一直留在池子</p>
+        <div class="chips" style="display:flex;flex-wrap:wrap;gap:8px">
+          ${pool.length===0?`<span class="drop-here">${topic.cards.length?"都归组了，可以保存结构了":"先去「收集」页丢几张碎片"}</span>`
+            :pool.map((c,i)=>chipHtml(c,i)).join("")}
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        ${topic.groups.length===0?"":topic.groups.map((g,gi)=>`
+          <div class="group" data-gid="${g.id}">
+            <h4><span class="gname" data-rename="${g.id}" title="点击重命名">${esc(g.name)}</span>
+              <button class="btn small" data-note="${g.id}" title="编辑说明">说明</button>
+              <button class="btn small" data-up="${g.id}" title="上移">↑</button>
+              <button class="btn small" data-down="${g.id}" title="下移">↓</button>
+              <button class="btn small danger" data-delgroup="${g.id}">解散</button></h4>
+            ${g.note?`<p style="margin:0 0 8px;font-size:13px;color:var(--purple-deep);background:rgba(238,237,254,.8);border-left:3px solid var(--purple-mid);border-radius:6px;padding:5px 10px">${esc(g.note)}</p>`:""}
+            <div class="chips">
+              ${g.cardIds.length===0?`<span class="drop-here">把碎片拖到这里</span>`
+                :g.cardIds.map((cid,ci)=>{ const c=cardById(topic,cid); return c?chipHtml(c,gi+ci):""; }).join("")}
+            </div>
+          </div>`).join("")}
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="addGroupBtn">＋ 新建分组</button>
+        <button class="btn primary" id="saveStructBtn" ${topic.cards.length===0?"disabled":""}>保存这个结构</button>
+      </div>
+      ${topic.snapshot?`<p class="hint" style="margin:10px 0 0">上次保存：${fmtDate(topic.snapshot.savedAt)} · 复盘对照用的是保存时的版本</p>`:""}
+    </div>
+  `;
+  function chipHtml(c,i){
+    return `<div class="chip ${selectedCard===c.id?"selected":""}" draggable="true"
+      style="background:${chipBg(i)}" data-id="${c.id}">${esc(c.text)}<span class="del" data-del="${c.id}">×</span></div>`;
+  }
+  function moveTo(cid,gid){ // gid=null 表示回池子
+    topic.groups.forEach(g=>{ g.cardIds=g.cardIds.filter(id=>id!==cid); });
+    if(gid){ const g=topic.groups.find(g=>g.id===gid); if(g) g.cardIds.push(cid); }
+    if(selectedCard===cid) selectedCard=null;
+    save(); renderPuzzle(body,topic);
+  }
+  // 点选移动（触屏友好）
+  body.querySelectorAll(".chip").forEach(el=>{
+    el.onclick=(ev)=>{
+      if(ev.target.dataset.del) return;
+      const cid=el.dataset.id;
+      if(selectedCard===cid){ selectedCard=null; renderPuzzle(body,topic); return; }
+      if(selectedCard){
+        const gid=el.closest(".group")?.dataset.gid||null;
+        moveTo(selectedCard,gid);
+      }else{
+        selectedCard=cid; toast("已选中，点目标分组（或池子）放进去");
+        renderPuzzle(body,topic);
+      }
+    };
+  });
+  // 拖拽（桌面）
+  body.querySelectorAll(".chip").forEach(el=>{
+    el.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain",el.dataset.id);
+      el.classList.add("dragging");
+    });
+    el.addEventListener("dragend",()=>el.classList.remove("dragging"));
+  });
+  const poolEl=document.getElementById("pool");
+  body.querySelectorAll(".pool,.group").forEach(zone=>{
+    zone.addEventListener("dragover",e=>{ e.preventDefault(); zone.classList.add("over"); });
+    zone.addEventListener("dragleave",()=>zone.classList.remove("over"));
+    zone.addEventListener("drop",e=>{
+      e.preventDefault(); zone.classList.remove("over");
+      const cid=e.dataTransfer.getData("text/plain");
+      if(cid) moveTo(cid, zone.classList.contains("group")?zone.dataset.gid:null);
+    });
+  });
+  body.querySelectorAll(".chip .del").forEach(el=>{
+    el.onclick=(ev)=>{ ev.stopPropagation();
+      askConfirm("删除碎片","删除这张碎片？",()=>{ deleteCard(topic,el.dataset.del); render(); });
+    };
+  });
+  body.querySelectorAll("[data-rename]").forEach(el=>{
+    el.onclick=()=>{
+      const g=topic.groups.find(x=>x.id===el.dataset.rename);
+      askText("分组名",g.name,(name)=>{ g.name=name; save(); renderPuzzle(body,topic); },"比如：助动词 / 词序");
+    };
+  });
+  body.querySelectorAll("[data-up],[data-down]").forEach(el=>{
+    el.onclick=()=>{
+      const gid=el.dataset.up||el.dataset.down;
+      const i=topic.groups.findIndex(g=>g.id===gid);
+      const j=el.dataset.up? i-1 : i+1;
+      if(i<0||j<0||j>=topic.groups.length) return;
+      const tmp=topic.groups[i]; topic.groups[i]=topic.groups[j]; topic.groups[j]=tmp;
+      save(); renderPuzzle(body,topic);
+    };
+  });
+  body.querySelectorAll("[data-note]").forEach(el=>{
+    el.onclick=()=>{
+      const g=topic.groups.find(x=>x.id===el.dataset.note);
+      askText("给「"+g.name+"」加一句说明",g.note||"", (v)=>{
+        g.note=v; save(); renderPuzzle(body,topic);
+      },"比如：先掌握这组 / 和「词序」组对比",true);
+    };
+  });
+  body.querySelectorAll("[data-delgroup]").forEach(el=>{
+    el.onclick=(ev)=>{ ev.stopPropagation();
+      topic.groups=topic.groups.filter(g=>g.id!==el.dataset.delgroup);
+      save(); renderPuzzle(body,topic); toast("已解散，碎片回到池子");
+    };
+  });
+  document.getElementById("addGroupBtn").onclick=()=>{
+    askText("新分组叫什么？","", (name)=>{
+      topic.groups.push({id:uid(),name:name,cardIds:[],note:""}); save(); renderPuzzle(body,topic);
+    },"比如：助动词 / 词序");
+  };
+  document.getElementById("saveStructBtn").onclick=()=>{
+    const grouped=topic.groups.reduce((n,g)=>n+g.cardIds.length,0);
+    if(grouped===0){ toast("至少把一张碎片拖进分组，再保存"); return; }
+    topic.snapshot={ savedAt:todayStr(),
+      groups:topic.groups.map(g=>({name:g.name,cardIds:[...g.cardIds]})) };
+    // 新进结构的碎片：默认明天该复盘
+    const t=todayStr();
+    topic.snapshot.groups.forEach(g=>g.cardIds.forEach(cid=>{
+      const c=cardById(topic,cid); if(c&&!c.due) c.due=addDaysStr(1);
+    }));
+    save(); renderPuzzle(body,topic);
+    toast("结构已保存，明天来复盘");
+  };
+}
+
+/* ---- 复盘 ---- */
+function snapshotCards(topic){
+  if(!topic.snapshot) return [];
+  const out=[];
+  topic.snapshot.groups.forEach(g=>g.cardIds.forEach(cid=>{
+    const c=cardById(topic,cid); if(c) out.push({card:c,group:g.name});
+  }));
+  return out;
+}
+function renderReview(body,topic){
+  if(!topic.snapshot){
+    body.innerHTML=`<div class="card"><div class="empty">先去「拼接」页把结构拼出来并保存，<br>复盘时才能「合上资料，凭记忆对照」。</div></div>`;
+    return;
+  }
+  if(lastSummary){ renderSummary(body,topic); return; }
+  if(review){ renderReviewStep(body,topic); return; }
+
+  const due=dueCount(topic);
+  const last=topic.reviews[topic.reviews.length-1];
+  body.innerHTML=`
+    <div class="card">
+      <p class="stepper">复盘 = <b>合上资料，用自己的话讲一遍</b>，再对照、标记薄弱点。</p>
+      ${due>0?`<p style="margin:0 0 6px;color:var(--coral-mid);font-size:13px">今天有 ${due} 张碎片到了复盘时间。</p>`
+             :`<p class="hint" style="margin:0 0 6px">今天没有到期的碎片（下次 ${fmtDate(nextDue(topic))}），也可以提前复盘。</p>`}
+      ${last?`<p class="hint" style="margin:0 0 12px">上次复盘：${fmtDate(last.date)} · ${last.mode==="write"?"写":last.mode==="speak"?"说":"翻卡"}模式</p>`:""}
+      <div class="mode-grid">
+        <div class="mode" data-mode="write"><b>写</b><span>不看资料写一遍<br>效果最好</span></div>
+        <div class="mode" data-mode="speak"><b>说</b><span>对着空气讲 60 秒<br>懒得写字选这个</span></div>
+        <div class="mode" data-mode="flip"><b>翻卡</b><span>最低配：只看组名<br>逐张凭记忆翻开</span></div>
+      </div>
+      <p class="hint" style="margin:12px 0 0">写 &gt; 说 &gt; 翻卡，按今天的电量选。</p>
+    </div>
+  `;
+  body.querySelectorAll(".mode").forEach(el=>{
+    el.onclick=()=>{
+      const mode=el.dataset.mode;
+      if(mode==="flip"){ startFlip(topic); renderReviewStep(body,topic); return; }
+      review={mode:mode,step:"output",output:"",marks:{},flip:null};
+      renderReviewStep(body,topic);
+    };
+  });
+}
+
+function renderReviewStep(body,topic){
+  const mode=review.mode;
+  if(mode==="write" && review.step==="output"){
+    body.innerHTML=`
+      <div class="card">
+        <div class="stepper">复盘 · 写模式 · 第 1 步</div>
+        <p style="margin:0 0 8px">「${esc(topic.name)}」是怎么回事？像讲给朋友听那样写下来。不看资料，写不出来就空着——那正是要补的。</p>
+        <textarea id="recallText" placeholder="先……然后……所以……">${esc(review.output)}</textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="toCompareBtn">写完了，开始对照</button>
+        </div>
+      </div>`;
+    document.getElementById("recallText").oninput=e=>{ review.output=e.target.value; };
+    document.getElementById("toCompareBtn").onclick=()=>{ review.step="compare"; renderReviewStep(body,topic); };
+    return;
+  }
+  if(mode==="speak" && review.step==="output"){
+    body.innerHTML=`
+      <div class="card">
+        <div class="stepper">复盘 · 说模式 · 第 1 步</div>
+        <p style="margin:0 0 8px">点开始，合上资料讲 60 秒「${esc(topic.name)}」（纯计时，不录音，讲给空气听）。讲不完没关系，卡壳的地方就是薄弱点。</p>
+        <div class="timer" id="timer">60</div>
+        <div class="row" style="justify-content:center">
+          <button class="btn primary" id="startTimerBtn">开始讲</button>
+          <button class="btn" id="skipTimerBtn">跳过，直接对照</button>
+        </div>
+      </div>`;
+    document.getElementById("skipTimerBtn").onclick=()=>{ review.step="compare"; renderReviewStep(body,topic); };
+    document.getElementById("startTimerBtn").onclick=()=>{
+      const timerEl=document.getElementById("timer");
+      const startBtn=document.getElementById("startTimerBtn");
+      startBtn.disabled=true;
+      let left=60;
+      const iv=setInterval(()=>{
+        left--; timerEl.textContent=left;
+        if(left<=0){ clearInterval(iv); toast("60 秒到，讲完了吗？"); }
+      },1000);
+      review._iv=iv;
+    };
+    // 讲完手动进入对照
+    const done=document.createElement("button");
+    done.className="btn primary"; done.textContent="讲完了，开始对照"; done.style.marginTop="12px";
+    done.onclick=()=>{ if(review._iv) clearInterval(review._iv); review.step="compare"; renderReviewStep(body,topic); };
+    document.querySelector(".card").appendChild(done);
+    return;
+  }
+  if(review.step==="compare"){
+    renderCompare(body,topic); return;
+  }
+  if(mode==="flip"){ renderFlip(body,topic); return; }
+}
+
+function renderCompare(body,topic){
+  const cards=snapshotCards(topic);
+  body.innerHTML=`
+    <div class="card">
+      <div class="stepper">复盘 · ${review.mode==="write"?"写":"说"}模式 · 第 2 步 · 对照</div>
+      ${review.mode==="write"?`<p class="hint" style="margin:0 0 4px">你刚才写的：</p>
+        <div style="background:#F7F6F2;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;white-space:pre-wrap;margin-bottom:12px">${esc(review.output||"（什么都没写）")}</div>`:""}
+      <p style="margin:0 0 10px">这是保存的结构。先<b>凭记忆</b>逐张诚实标记：<b style="color:var(--green-deep)">命中</b>（讲出来了）/ <b style="color:var(--red-deep)">漏了</b>（完全没想起）/ <b style="color:var(--amber-deep)">讲错</b>。原文资料等复盘结束后再翻。</p>
+      ${cards.map(({card,group})=>`
+        <div class="snapshot-card" data-cid="${card.id}">
+          <div><span class="tag" style="background:var(--purple-mid);color:#fff;font-size:10px;border-radius:4px;padding:0 4px;margin-right:6px">${esc(group)}</span><span class="txt">${esc(card.text)}</span></div>
+          <div class="mark-row">
+            <button class="mark-btn hit ${review.marks[card.id]==="hit"?"on":""}" data-mark="hit">命中</button>
+            <button class="mark-btn missed ${review.marks[card.id]==="missed"?"on":""}" data-mark="missed">漏了</button>
+            <button class="mark-btn wrong ${review.marks[card.id]==="wrong"?"on":""}" data-mark="wrong">讲错</button>
+          </div>
+        </div>`).join("")}
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="finishReviewBtn">标记完了，结束复盘</button>
+      </div>
+    </div>`;
+  body.querySelectorAll(".mark-btn").forEach(el=>{
+    el.onclick=()=>{
+      const cid=el.closest(".snapshot-card").dataset.cid;
+      review.marks[cid]=el.dataset.mark;
+      el.parentElement.querySelectorAll(".mark-btn").forEach(b=>b.classList.remove("on"));
+      el.classList.add("on");
+    };
+  });
+  document.getElementById("finishReviewBtn").onclick=()=>{
+    let marked=0;
+    cards.forEach(({card})=>{ if(review.marks[card.id]) marked++; });
+    if(marked===0){ toast("一张都没标——要么全命中（全点一遍），要么今天先别复盘"); return; }
+    finishReview(topic,cards);
+  };
+}
+
+/* 翻卡模式 */
+function startFlip(topic){
+  const cards=snapshotCards(topic);
+  review={mode:"flip",step:"flip",marks:{},flip:{queue:cards,i:0,open:false}};
+}
+function renderFlip(body,topic){
+  const q=review.flip;
+  if(q.i>=q.queue.length){
+    const cards=snapshotCards(topic);
+    finishReview(topic,cards); return;
+  }
+  const {card,group}=q.queue[q.i];
+  body.innerHTML=`
+    <div class="card">
+      <div class="stepper">复盘 · 翻卡模式 · 第 ${q.i+1} / ${q.queue.length} 张</div>
+      <p class="hint" style="margin:0 0 10px">分组：<b style="color:var(--purple-deep)">${esc(group)}</b> —— 先别点，想想这张是什么。</p>
+      ${q.open
+        ?`<div class="face-down open">${esc(card.text)}</div>
+          <div class="mark-row" style="justify-content:center;margin-top:12px">
+            <button class="mark-btn hit" id="flipHit">想起来了</button>
+            <button class="mark-btn missed" id="flipMiss">没想起来</button>
+          </div>`
+        :`<div class="face-down" id="flipCard">?</div>
+          <p class="hint" style="text-align:center;margin:10px 0 0">点卡片翻开</p>`}
+    </div>`;
+  if(!q.open){
+    document.getElementById("flipCard").onclick=()=>{ q.open=true; renderFlip(body,topic); };
+  }else{
+    document.getElementById("flipHit").onclick=()=>{ review.marks[card.id]="hit"; q.i++; q.open=false; renderFlip(body,topic); };
+    document.getElementById("flipMiss").onclick=()=>{ review.marks[card.id]="missed"; q.i++; q.open=false; renderFlip(body,topic); };
+  }
+}
+
+function finishReview(topic,cards){
+  const hits=[],missed=[],wrong=[];
+  cards.forEach(({card})=>{
+    const m=review.marks[card.id];
+    if(m==="hit"){ hits.push(card.id); card.box=Math.min(3,(card.box||0)+1); card.due=addDaysStr(INTERVALS[card.box]); }
+    else if(m==="missed"){ missed.push(card.id); card.box=0; card.due=addDaysStr(1); }
+    else if(m==="wrong"){ wrong.push(card.id); card.box=0; card.due=addDaysStr(1); }
+  });
+  topic.reviews.push({date:todayStr(),mode:review.mode,output:review.output||"",
+    hits:hits,missed:missed,wrong:wrong});
+  save();
+  lastSummary={mode:review.mode,hit:hits.length,missed:missed.length,wrong:wrong.length,
+    total:cards.length,next:nextDue(topic),output:review.output||""};
+  review=null;
+  render();
+}
+
+function renderSummary(body,topic){
+  const s=lastSummary;
+  const modeName=s.mode==="write"?"写":s.mode==="speak"?"说":"翻卡";
+  body.innerHTML=`
+    <div class="card">
+      <p class="stepper">复盘完成 · ${modeName}模式</p>
+      <p class="summary-big">掌握 ${s.hit} 张 · 未掌握 ${s.missed+s.wrong} 张</p>
+      ${s.missed>0?`<div style="font-size:13px;color:var(--red-deep);background:var(--red-bg);border-radius:8px;padding:8px 10px;margin-bottom:6px">漏了的 ${s.missed} 张 → 明天再来</div>`:""}
+      ${s.wrong>0?`<div style="font-size:13px;color:var(--amber-deep);background:var(--amber-bg);border-radius:8px;padding:8px 10px;margin-bottom:6px">讲错的 ${s.wrong} 张 → 明天再来</div>`:""}
+      <div style="font-size:13px;color:var(--green-deep);background:var(--green-bg);border-radius:8px;padding:8px 10px;margin-bottom:12px">命中的碎片间隔已拉长，下次 ${fmtDate(s.next)}</div>
+      ${(()=>{
+        const mat=(topic.material||"").trim();
+        if(!mat) return "";
+        const out=normText(s.output||"");
+        const outB=bigrams(out);
+        const sents=mat.split(/[\n。！？；;]+/).map(t=>t.trim()).filter(t=>t.length>=4);
+        const hit=l=>out.includes(normText(l))||coverageRatio(normText(l),outB)>=0.6;
+        const missing=sents.filter(l=>!hit(l));
+        const covered=sents.length-missing.length;
+        const summaryStyle="cursor:pointer;font-size:13px;color:var(--teal-mid);user-select:none";
+        const matBox=`<details style="margin-top:10px"><summary class="${summaryStyle}">展开参考资料</summary>
+          <div style="margin-top:8px;max-height:240px;overflow:auto;white-space:pre-wrap;background:#F7F6F2;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13px;line-height:1.7">${esc(mat)}</div></details>`;
+        let head="";
+        if(s.mode==="write"&&s.output&&sents.length){
+          head=`<p class="stepper" style="margin:0 0 8px">对照资料：你的输出提到了 <b>${covered} / ${sents.length}</b> 句原文</p>
+            ${missing.length
+              ?missing.slice(0,15).map(l=>`<div style="font-size:12px;color:var(--red-deep);background:var(--red-bg);border-radius:6px;padding:5px 9px;margin-bottom:5px">没提到：${esc(l)}</div>`).join("")
+                +(missing.length>15?`<p class="hint" style="margin:6px 0 0">还有 ${missing.length-15} 句没提到，展开原文慢慢看。</p>`:"")
+              :`<div style="font-size:13px;color:var(--green-deep);background:var(--green-bg);border-radius:6px;padding:5px 9px;margin-bottom:6px">原文要点都提到了，讲得很全。</div>`}`;
+        }else{
+          head=`<p class="stepper" style="margin:0 0 4px">复盘结束了，现在可以翻开资料核对了：</p>`;
+        }
+        return `<div style="margin-top:4px;border-top:1px solid var(--border);padding-top:12px">${head}${matBox}
+          <p class="hint" style="margin:8px 0 0">「没提到」只是这次没讲到，不等于错——对着原文看看它是不是考点。</p></div>`;
+      })()}
+      <button class="btn primary" id="summaryBackBtn" style="margin-top:12px">好的</button>
+    </div>`;
+  document.getElementById("summaryBackBtn").onclick=()=>{ lastSummary=null; render(); };
+}
+
+/* ---- 统计 ---- */
+function renderStats(body,topic){
+  const n=topic.cards.length;
+  const dist={stable:0,building:0,fresh:0};
+  topic.cards.forEach(c=>{ if((c.box||0)>=3) dist.stable++; else if((c.box||0)>=1) dist.building++; else dist.fresh++; });
+  const pct=k=> n? Math.round(dist[k]/n*100) : 0;
+  const dates=new Set(topic.reviews.map(r=>r.date));
+  let streak=0; const d=new Date();
+  if(!dates.has(dateStr(d))) d.setDate(d.getDate()-1);
+  while(dates.has(dateStr(d))){ streak++; d.setDate(d.getDate()-1); }
+  const modeName=m=>m==="write"?"写":m==="speak"?"说":"翻卡";
+  const hist=topic.reviews.slice().reverse().slice(0,12);
+  body.innerHTML=`
+    <div class="card">
+      <p class="stepper" style="margin:0 0 4px">这个主题的掌握地图</p>
+      ${n===0?`<div class="empty">还没有碎片，先去「收集」页记几张。</div>`:`
+        <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;border:1px solid var(--border);margin:12px 0 8px">
+          <div style="width:${pct("stable")}%;background:#97C459"></div>
+          <div style="width:${pct("building")}%;background:#85B7EB"></div>
+          <div style="width:${pct("fresh")}%;background:#D3D1C7"></div>
+        </div>
+        <div class="row" style="gap:14px;font-size:12px;flex-wrap:wrap">
+          <span style="color:#3B6D11">● 已掌握 ${dist.stable} 张（${pct("stable")}%）</span>
+          <span style="color:#185FA5">● 巩固中 ${dist.building} 张（${pct("building")}%）</span>
+          <span style="color:#5F5E5A">● 未掌握 ${dist.fresh} 张（${pct("fresh")}%）</span>
+        </div>
+        <p class="hint" style="margin:8px 0 0">复盘里标「命中」的碎片会由灰变蓝、再到绿；标「漏了」「讲错」的会回到灰，第二天再次出现。</p>`}
+      <hr class="divider" style="margin:16px 0">
+      <p class="stepper" style="margin:0 0 8px">连续复盘：<b>${streak} 天</b> · 累计 ${topic.reviews.length} 次</p>
+      ${hist.length===0
+        ?`<div class="empty" style="padding:16px">还没复盘过。保存结构后，明天来第一次。</div>`
+        :hist.map(r=>`<div class="snapshot-card">
+            <span class="txt">${fmtDate(r.date)} · ${modeName(r.mode)}模式</span>
+            <span style="font-size:12px;color:var(--green-deep)">掌握 ${r.hits.length}</span>
+            <span style="font-size:12px;color:var(--red-deep)">未掌握 ${r.missed.length+r.wrong.length}</span>
+          </div>`).join("")}
+      <hr class="divider" style="margin:16px 0">
+      <p class="stepper" style="margin:0 0 8px">导出本主题</p>
+      <div class="row" style="flex-wrap:wrap">
+        <button class="btn" id="expTopicTxt">文本 (.txt)</button>
+        <button class="btn" id="expTopicDoc">Word (.doc)</button>
+      </div>
+      <p class="hint" style="margin:8px 0 0">文本 / Word 是本主题的可读报告（参考资料 + 结构 + 掌握情况 + 复盘历史）。完整数据备份用首页的「导出数据 (JSON)」，之后可导入恢复。</p>
+    </div>`;
+  document.getElementById("expTopicTxt").onclick=()=>exportTopicReport(topic,"txt");
+  document.getElementById("expTopicDoc").onclick=()=>exportTopicReport(topic,"doc");
+}
+
+/* ============ 渲染入口 ============ */
+function render(){
+  if(view.name==="home") renderHome();
+  else renderTopic();
+}
+render();
+</script>
+</body>
+</html>
